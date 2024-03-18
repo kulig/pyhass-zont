@@ -29,6 +29,7 @@ class Availability(Model):
 
 class Entity(Model):
     unique_id: str | None = None
+    object_id: str | None = None
     name: str | None = None
     device: Device | None = None
     qos: int | None = 0
@@ -40,6 +41,8 @@ class Entity(Model):
 
 
 class WaterHeater(Entity):
+    discovery_class_: str = 'water_heater'
+
     current_temperature_template: str | None = None
     current_temperature_topic: str | None = None
     initial: float | None = None
@@ -65,6 +68,8 @@ class WaterHeater(Entity):
 
 
 class BinarySensor(Entity):
+    discovery_class_: str = 'binary_sensor'
+
     expire_after: int | None = None
     force_update: bool | None = None
     off_delay: int | None = None
@@ -76,6 +81,8 @@ class BinarySensor(Entity):
 
 
 class Sensor(Entity):
+    discovery_class_: str = 'sensor'
+
     expire_after: int | None = None
     force_update: bool | None = None
     device_class: SensorDeviceClass | None = None
@@ -88,6 +95,8 @@ class Sensor(Entity):
 
 
 class Switch(Entity):
+    discovery_class_: str = 'switch'
+
     command_topic: str | None = None
     device_class: SwitchDeviceClass | None = None
     optimistic: bool | None = None
@@ -99,6 +108,8 @@ class Switch(Entity):
 
 
 class Fan(Entity):
+    discovery_class_: str = 'fan'
+
     state_topic: str | None = None
     state_value_template: str | None = None
     command_topic: str | None = None
@@ -131,6 +142,8 @@ class Fan(Entity):
 
 
 class Light(Entity):
+    discovery_class_: str = 'light'
+
     brightness_command_topic: str | None = None
     brightness_command_template: str | None = None
     brightness_scale: int | None = None
@@ -180,6 +193,8 @@ class Light(Entity):
 
 
 class Number(Entity):
+    discovery_class_: str = 'number'
+
     command_template: str | None = None
     command_topic: str | None = None
     state_topic: str | None = None

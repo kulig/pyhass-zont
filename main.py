@@ -14,8 +14,16 @@ def init_node(id_: str) -> Node:
         clean_session=False,
         reconnect_on_failure=True,
     )
+    # Подключаемся к MQTT и запускаем thread с внутренним циклом MQTT-клиента
+    client.username_pw_set(config.MQTT_USER, config.MQTT_PASSWD)
+    client.connect(
+        host=config.MQTT_HOST,
+        port=config.MQTT_PORT,
+    )
+    client.loop_start()
+
     # Создаем собственно node
-    res = Node(
+    return Node(
         id_=id_,
         client=client,
         device=models.Device(
@@ -25,30 +33,41 @@ def init_node(id_: str) -> Node:
             sw_version='0.0.1'
         )
     )
-    # Подключаемся к MQTT и запускаем thread с внутренним циклом MQTT-клиента
-    client.username_pw_set(config.MQTT_USER, config.MQTT_PASSWD)
-    client.connect(
-        host=config.MQTT_HOST,
-        port=config.MQTT_PORT,
-    )
-    client.loop_start()
-
-    return res
 
 
 def main() -> None:
     node = init_node('TEST_NODE')
-    sensor1 = entities.ThermoSensor('temp1')
-    sensor2 = entities.ThermoSensor('temp2')
-    node.add_entity(sensor1)
-    node.add_entity(sensor2)
-    node.add_entity(entities.Relay('relay1'))
-    node.add_entity(entities.Relay('relay2'))
+
+    boiler_temp = entities.TemperatureSensor('boiler_temp')
+    boiler_temp.model.icon = 'mdi:thermometer-water'
+    boiler_temp.model.name = 'Температура бойлера'
+    node.add_entity(boiler_temp)
+
+    home_temp = entities.TemperatureSensor('home_temp')
+    home_temp.model.icon = 'mdi:home-thermometer-outline'
+    home_temp.model.name = 'Температура в доме'
+    node.add_entity(home_temp)
+
+    outdoor_temp = entities.TemperatureSensor('outdoor_temp')
+    outdoor_temp.model.icon = 'mdi:sun-thermometer'
+    outdoor_temp.model.name = 'Уличная температура'
+    node.add_entity(outdoor_temp)
+
+    gate = entities.Relay('gate_switch')
+    gate.model.icon = 'mdi:boom-gate-up'
+    gate.model.name = 'Ворота'
+    node.add_entity(gate)
+
+    street_lamp = entities.Relay('street_lamp')
+    street_lamp.model.icon = 'mdi:outdoor-lamp'
+    street_lamp.model.name = 'Уличное освещение'
+    node.add_entity(street_lamp)
 
     while (True):
         time.sleep(5)
-        sensor1.publish_state()
-        sensor2.publish_state()
+        boiler_temp.publish_state()
+        home_temp.publish_state()
+        outdoor_temp.publish_state()
 
 
 if __name__ == '__main__':

@@ -4,7 +4,7 @@ import typing as t
 import random
 
 
-class ThermoSensor(Entity):
+class TemperatureSensor(Entity):
 
     def __init__(self, id_: str) -> None:
         super().__init__(id_, model_cls=models.Sensor)
@@ -14,7 +14,6 @@ class ThermoSensor(Entity):
         self.model.suggested_display_precision = 1
 
     def get_state(self) -> str:
-        print(f'Thermo sensor "{self.id}" state requested')
         return str(random.randrange(-300, +700) / 10)
 
 

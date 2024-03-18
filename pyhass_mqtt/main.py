@@ -5,9 +5,8 @@ from . import models
 
 class Entity:
 
-    def __init__(self, id_: str, model_cls: type, cls_name: str | None = None) -> None:
+    def __init__(self, id_: str, model_cls: type) -> None:
         self.node: t.Optional['Node'] = None
-        self.cls_name = cls_name or model_cls.__name__.lower()
         self.model = model_cls()
         self.id = id_
         self.discovery_topic: str | None = None
@@ -15,28 +14,34 @@ class Entity:
     def set_node(self, node: t.Optional['Node']) -> None:
         self.node = node
         if node is not None:
-            self.model.unique_id = f'{node.id}_{self.id}'
+            self.model.object_id = self.model.unique_id = f'{node.id}_{self.id}'
             self.model.state_topic = f'{node.id}/{self.id}/state'
             self.model.device = node.device
-            self.discovery_topic = f'{node.discovery_prefix}/{self.cls_name}/{node.id}/{self.id}/config'
+            self.discovery_topic = f'{node.discovery_prefix}/{self.model.discovery_class_}/{node.id}/{self.id}/config'
         else:
             self.model.unique_id = None
+            self.model.object_id = None
             self.model.state_topic = None
             self.model.device = None
             self.discovery_topic = None
 
     def subscribe(self) -> None:
-        '''
-        Subscribe as: self.node.client.message_callback_add(topic, on_msg)
-        Message handler like: def on_msg(client: mqtt.Client, userdata: t.Any, message: mqtt.MQTTMessage)
-        '''
+        """
+        Subscribe as:
+            self.node.client.subscribe(topic)
+            self.node.client.message_callback_add(topic, on_msg)
+        Message handler like:
+            def on_msg(client: mqtt.Client, userdata: t.Any, message: mqtt.MQTTMessage) -> None
+        """
         if self.node is None:
             raise RuntimeError('Cannot subscribe entity without node')
 
     def unsubscribe(self) -> None:
-        '''
-        Unsubscribe as: self.node.client.message_callback_remove(topic)
-        '''
+        """
+        Unsubscribe as:
+            self.node.client.message_callback_remove(topic)
+            self.node.client.unsubscribe(topic)
+        """
         if self.node is None:
             raise RuntimeError('Cannot unsubscribe entity without node')
 
@@ -77,6 +82,10 @@ class Node:
         self.entities = {}
 
     def add_entity(self, obj: Entity) -> None:
+        if obj.node == self:
+            return
+        if obj.node is not None:
+            obj.node.remove_entity(obj)
         if obj.id in self.entities:
             raise KeyError(f'Duplicate entity "{obj.id}"')
         self.entities[obj.id] = obj
