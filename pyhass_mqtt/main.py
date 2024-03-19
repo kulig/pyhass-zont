@@ -61,7 +61,12 @@ class Entity:
     def publish_discovery(self) -> None:
         if self.node is None:
             raise RuntimeError('Cannot publish discovery of entity without node')
-        self.node.client.publish(self.discovery_topic, self.model.json(exclude_none=True), 1, False)
+        self.node.client.publish(
+            self.discovery_topic,
+            self.model.json(exclude_none=True, exclude='discovery_class_'),
+            1,
+            False
+        )
 
     def unpublish_discovery(self) -> None:
         if self.node is None:
