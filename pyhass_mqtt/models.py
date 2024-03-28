@@ -3,7 +3,9 @@ import pydantic
 from .enums import *
 
 
-Model = pydantic.BaseModel
+class Model(pydantic.BaseModel):
+    def discovery_json(self) -> str:
+        return self.json(exclude_none=True, exclude={'discovery_class_'})
 
 
 class Device(Model):
