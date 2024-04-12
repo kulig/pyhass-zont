@@ -135,3 +135,16 @@ class NumberMode(enum.StrEnum):
     auto = 'auto'
     box = 'box'
     slider = 'slider'
+
+
+class HumidifierAction(enum.StrEnum):
+    off = 'off'
+    humidifying = 'humidifying'
+    drying = 'drying'
+    idle = 'idle'
+
+
+class HumidifierDeviceClass(enum.StrEnum):
+    humidifier = 'humidifier'
+    dehumidifier = 'dehumidifier'
+

@@ -5,6 +5,11 @@ from .enums import *
 
 class Model(pydantic.BaseModel):
     def discovery_json(self) -> str:
+        """
+        Выгрузить JSON-описание, совместимое с Home Assistant MQTT discovery
+
+        :return: Строка, содержащая JSON discovery-пакета
+        """
         return self.json(exclude_none=True, exclude={'discovery_class_'})
 
 
@@ -30,6 +35,9 @@ class Availability(Model):
 
 
 class Entity(Model):
+    """
+    Базовая модель для всех MQTT-сущностей HA
+    """
     unique_id: str | None = None
     object_id: str | None = None
     name: str | None = None
@@ -43,6 +51,9 @@ class Entity(Model):
 
 
 class WaterHeater(Entity):
+    """
+    Водонагреватель, бойлер
+    """
     discovery_class_: str = 'water_heater'
 
     current_temperature_template: str | None = None
@@ -70,6 +81,9 @@ class WaterHeater(Entity):
 
 
 class BinarySensor(Entity):
+    """
+    Двоичный датчик. Может возвращать только два состояния
+    """
     discovery_class_: str = 'binary_sensor'
 
     expire_after: int | None = None
@@ -83,6 +97,11 @@ class BinarySensor(Entity):
 
 
 class Sensor(Entity):
+    """
+    Датчик. Возвращает состояние.
+    Внимание! Если установлено поле device_class, то обязательно
+    следует указывать подходящие единицы измерения в поле unit_of_measurement.
+    """
     discovery_class_: str = 'sensor'
 
     expire_after: int | None = None
@@ -97,6 +116,9 @@ class Sensor(Entity):
 
 
 class Switch(Entity):
+    """
+    Простейший эффектор с двумя состояниями.
+    """
     discovery_class_: str = 'switch'
 
     command_topic: str | None = None
@@ -110,6 +132,9 @@ class Switch(Entity):
 
 
 class Fan(Entity):
+    """
+    Вентилятор/вентиляционная система
+    """
     discovery_class_: str = 'fan'
 
     state_topic: str | None = None
@@ -144,6 +169,9 @@ class Fan(Entity):
 
 
 class Light(Entity):
+    """
+    Освещение, в т.ч. регулируемой яркости и цвета.
+    """
     discovery_class_: str = 'light'
 
     brightness_command_topic: str | None = None
@@ -195,6 +223,9 @@ class Light(Entity):
 
 
 class Number(Entity):
+    """
+    Эффектор с float-состоянием.
+    """
     discovery_class_: str = 'number'
 
     command_template: str | None = None
@@ -208,4 +239,3 @@ class Number(Entity):
     payload_reset: str | None = None
     unit_of_measurement: str | None = None
     value_template: str | None = None
-
