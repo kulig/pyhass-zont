@@ -1,0 +1,96 @@
+target-version = "py39"
+
+line-length = 120
+show-fixes = true
+output-format = "full"
+
+namespace-packages = [
+    "commands",
+    "commands/tenant",
+]
+
+[lint]
+select = [
+    "F",      # Pyflakes
+    "E",      # pycodestyle Error
+    "W",      # pycodestyle Warning
+    "C90",    # mccabe
+    "N",      # pep8-naming
+    "UP",     # pyupgrade
+    "ANN",    # flake8-annotations
+    "ASYNC",  # flake8-async
+    "S",      # flake8-bandit
+    "BLE",    # flake8-blind-except
+    "B",      # flake8-bugbear
+    "A",      # flake8-builtins
+    "COM",    # flake8-commas
+    "C4",     # flake8-comprehensions
+    "T10",    # flake8-debugger
+    "ISC",    # flake8-implicit-str-concat
+    "G",      # flake8-logging-format
+    "INP",    # flake8-no-pep420
+    "PIE",    # flake8-pie
+    "T20",    # flake8-print
+    "RSE",    # flake8-raise
+    "RET",    # flake8-return
+    "SLF",    # flake8-self
+    "SLOT",   # flake8-slots
+    "SIM",    # flake8-simplify
+    "TCH",    # flake8-type-checking
+    "ARG",    # flake8-unused-arguments
+    "PTH",    # flake8-use-pathlib
+    "PGH",    # pygrep-hooks
+    "PL",     # Pylint
+    "FLY",    # flynt
+    "PERF",   # Perflint
+    "RUF",    # Ruff-specific rules
+    "I",      # isort
+]
+
+exclude = [
+    "alembic/*",
+]
+ignore = [
+    "N818",
+    # У RUF правил нет настроек локали.
+    "RUF001",
+    "RUF002",
+    "RUF003",
+    # Пока не готов переходить на новые аннотации.
+    "UP006",
+    "UP007",
+    "UP035",
+]
+
+[lint.per-file-ignores]
+"app.py" = ["E402"]
+"commands/iam.py" = ["T201", "ANN"]
+"commands/restrictions.py" = ["T201"]
+"commands/organizations.py" = ["T201"]
+
+[lint.pep8-naming]
+classmethod-decorators = [
+    "pydantic.validator",
+    "pydantic.root_validator",
+    "sqlalchemy.orm.declared_attr",
+    "sqlalchemy.orm.declared_attr.directive",
+]
+
+[lint.flake8-annotations]
+allow-star-arg-any = true
+
+[lint.flake8-bugbear]
+extend-immutable-calls = [
+    "fastapi.Depends",
+    "fastapi.Query",
+    "fastapi.Path",
+    "fastapi.Body",
+    "fastapi_filter.FilterDepends",
+]
+
+[lint.pylint]
+max-args = 10
+
+[lint.isort]
+lines-after-imports = 2
+relative-imports-order = "closest-to-furthest"
