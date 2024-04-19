@@ -1,14 +1,13 @@
 from typing import List, Optional
 
-from .entity import Entity
+from .entity import EntityModel
 
 
-class Fan(Entity):
+class FanModel(EntityModel):
     """Вентилятор/вентиляционная система."""
 
     discovery_class_: str = "fan"
 
-    state_topic: Optional[str] = None
     state_value_template: Optional[str] = None
     command_topic: Optional[str] = None
     payload_off: Optional[str] = None

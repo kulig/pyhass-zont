@@ -1,8 +1,0 @@
-dotenv
-mbar
-mireds
-MQTT
-paho
-rgbw
-rgbww
-unitless

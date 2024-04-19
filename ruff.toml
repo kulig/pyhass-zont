@@ -60,13 +60,8 @@ ignore = [
     "UP006",
     "UP007",
     "UP035",
+    "ANN101",
 ]
-
-[lint.per-file-ignores]
-"app.py" = ["E402"]
-"commands/iam.py" = ["T201", "ANN"]
-"commands/restrictions.py" = ["T201"]
-"commands/organizations.py" = ["T201"]
 
 [lint.pep8-naming]
 classmethod-decorators = [

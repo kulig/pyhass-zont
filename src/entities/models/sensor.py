@@ -2,10 +2,10 @@ from typing import Optional
 
 from src.entities import enums
 
-from .entity import Entity
+from .entity import EntityModel
 
 
-class Sensor(Entity):
+class SensorModel(EntityModel):
     """
     Датчик. Возвращает состояние.
     Внимание! Если установлено поле device_class, то обязательно
@@ -16,10 +16,9 @@ class Sensor(Entity):
 
     expire_after: Optional[None] = None
     force_update: Optional[bool] = None
-    device_class: enums.SensorEnum | None = None
+    device_class: Optional[enums.SensorEnum] = None
     last_reset_value_template: Optional[str] = None
-    suggested_display_precision: int | None = None
+    suggested_display_precision: Optional[int] = None
     state_class: Optional[enums.SensorStateEnum] = None
     unit_of_measurement: Optional[str] = None
     value_template: Optional[str] = None
-    state_topic: Optional[str] = None

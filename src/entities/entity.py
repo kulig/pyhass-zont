@@ -1,4 +1,18 @@
-class Entity:
+from typing import TYPE_CHECKING, Generic, Optional, TypeVar
+
+import paho.mqtt.client as mqtt
+
+from src.devices.models import DeviceModel
+
+
+if TYPE_CHECKING:
+    from src.entities.models import EntityModel
+
+
+EntityM = TypeVar("EntityM", bound="EntityModel")
+
+
+class Entity(Generic[EntityM]):
     """
     Базовый класс для определения MQTT-сущностей, которые понимаются Home Assistant.
     https://www.home-assistant.io/integrations/mqtt/
@@ -6,80 +20,122 @@ class Entity:
 
     def __init__(
         self,
-        id_: str,
-        model_cls: type,
+        uid: str,
+        entity_model: EntityM,
     ) -> None:
         """
-        :param id_: Строка, содержащая уникальный идентификатор сущности в рамках Node.
-        :param model_cls: Класс (фабрика) модели сущности. См. pyhass_mqtt.models или
-                          https://www.home-assistant.io/integrations/mqtt/
-        """
-        self.model = model_cls()
-        self.id = id_
-        self.discovery_topic: str | None = None
+        Инициализировать сущность.
 
-    def set_node(self, node: t.Optional["Node"]) -> None:
+        Args:
+            uid: Строка, содержащая уникальный идентификатор сущности в рамках устройства.
+            entity_model: Модель, описывающая сущность для Home Assistant.
         """
-        В этом методе устанавливается node, владеющая данной сущностью.
-        В наследниках этого класса следует переопределять этот метод для вычисления имен топиков и прочего,
-        зависящего от ноды или ее имени. При переопределении обязательно сначала вызвать родительскую реализацию метода.
+        self.uid = uid
+        self.name = entity_model.name
+        self.model = entity_model
+        self.discovery_topic: Optional[str] = None
+        self.mqtt_client: Optional[mqtt.Client] = None
+        self.device_uid: Optional[str] = None
 
-        :param node: Экземпляр класса Node или None
+    def bind(
+        self,
+        device_model: DeviceModel,
+        mqtt_client: mqtt.Client,
+    ) -> None:
         """
-        self.node = node
-        if node is not None:
-            self.model.object_id = self.model.unique_id = f"{node.id}_{self.id}"
-            self.model.state_topic = f"{node.id}/{self.id}/state"
-            self.model.device = node.device
-            self.discovery_topic = f"{node.discovery_prefix}/{self.model.discovery_class_}/{node.id}/{self.id}/config"
-        else:
-            self.model.unique_id = None
-            self.model.object_id = None
-            self.model.state_topic = None
-            self.model.device = None
-            self.discovery_topic = None
+        Привязать сущность к устройству.
+
+        Args:
+            device_model: Модель устройства для Home Assistant.
+            mqtt_client: MQTT-клиент, экземпляр paho.mqtt.client.Client
+        """
+        self.mqtt_client = mqtt_client
+        self.model.unique_id = f"{device_model.uid}_{self.uid}"
+        self.model.object_id = self.model.unique_id
+        self.model.state_topic = f"{device_model.uid}/{self.uid}/state"
+        self.model.device = device_model
+        self.discovery_topic = (
+            f"{device_model.discovery_prefix}/{self.model.discovery_class_}/{device_model.uid}/{self.uid}/config"
+        )
+        self.device_uid = device_model.uid
+
+        self.subscribe()
+        self.publish_discovery()
+        self.publish_state()
+
+    def unbind(self) -> None:
+        """
+        Отвязать сущность от устройства.
+
+        Args:
+            device_model: Модель устройства для Home Assistant.
+            mqtt_client: MQTT-клиент, экземпляр paho.mqtt.client.Client
+        """
+        self.unpublish_discovery()
+        self.unsubscribe()
+
+        self.mqtt_client = None
+        self.model.object_id = None
+        self.model.unique_id = None
+        self.model.state_topic = None
+        self.model.device = None
+        self.discovery_topic = None
+        self.device_uid = None
 
     def subscribe(self) -> None:
         """
-        Этот метод вызывается нодой, чтобы данная сущность подписалась на все интересующие ее топики.
-        В наследниках этого класса при переопределении сначала желательно вызвать родительскую реализацию.
+        Подписаться на все интересующие топики.
+        В наследниках этого класса при переопределении сначала желательно вызвать родителя.
 
         Чтобы подписаться, используем:
-            self.node.client.subscribe(topic)
-            self.node.client.message_callback_add(topic, on_msg)
+            self.mqtt_client.subscribe(topic)
+            self.mqtt_client.message_callback_add(topic, on_msg)
         Обработчик должен быть таким:
-            def on_msg(client: mqtt.Client, userdata: t.Any, message: mqtt.MQTTMessage) -> None
+            def on_message(
+                mqtt_client: mqtt.Client,
+                userdata: Any,
+                message: mqtt.MQTTMessage
+            ) -> None
         """
-        if self.node is None:
-            raise RuntimeError("Cannot subscribe entity without node")
+        if self.device_uid is None:
+            raise RuntimeError("Нельзя подписаться на топики без привязки к устройству")
+
+        if self.mqtt_client is None:
+            raise RuntimeError("Нельзя подписаться на топики без mqtt клиента")
 
     def unsubscribe(self) -> None:
         """
-        Этот метод вызывается нодой, чтобы сущность отписалась от всех топиков, на которые была подписана.
-        В наследниках этого класса при переопределении сначала желательно вызвать родительскую реализацию.
+        Отписаться от всех топиков.
+        В наследниках этого класса при переопределении сначала желательно вызвать родителя.
 
         Чтобы отписаться, используем:
-            self.node.client.message_callback_remove(topic)
-            self.node.client.unsubscribe(topic)
+            self.mqtt_client.message_callback_remove(topic)
+            self.mqtt_client.unsubscribe(topic)
         """
-        if self.node is None:
-            raise RuntimeError("Cannot unsubscribe entity without node")
+
+        if self.device_uid is None:
+            raise RuntimeError("Нельзя отписаться от топиков без привязки к устройству")
+
+        if self.mqtt_client is None:
+            raise RuntimeError("Нельзя отписаться от топиков без mqtt клиента")
 
     def get_state(self) -> str:
-        """
-        Этот метод обязателен к переопределению в наследниках класса.
-
-        :return: Текущее состояние (state) сущности.
-        """
-        raise NotImplementedError("get_state")
+        """Получить состояние."""
+        raise NotImplementedError('Метод "get_state" не определен')
 
     def publish_state(self) -> None:
-        """
-        При вызове этого метода, сущность опубликует в своем state_topic свое состояние (см. get_state())
-        """
-        if self.node is None:
-            raise RuntimeError("Cannot publish state of entity without node")
-        self.node.client.publish(
+        """Опубликовать состояние в state_topic"""
+
+        if self.device_uid is None:
+            raise RuntimeError("Нельзя опубликовать состояние без привязки к устройству")
+
+        if self.mqtt_client is None:
+            raise RuntimeError("Нельзя опубликовать состояние без mqtt клиента")
+
+        if self.model.state_topic is None:
+            raise RuntimeError("Нельзя опубликовать состояние без mqtt топика")
+
+        self.mqtt_client.publish(
             self.model.state_topic,
             self.get_state().encode(self.model.encoding),
             self.model.qos,
@@ -87,22 +143,39 @@ class Entity:
         )
 
     def publish_discovery(self) -> None:
-        """
-        Этот метод публикует MQTT discovery JSON для Home Assistant в соответствующем топике.
-        Метод вызывается нодой.
-        Для генерации discovery JSON используется экземпляр модели сущности (см. конструктор)
-        """
-        if self.node is None:
-            raise RuntimeError("Cannot publish discovery of entity without node")
-        self.node.client.publish(
-            self.discovery_topic, self.model.discovery_json(), 1, False
+        """Опубликовать MQTT discovery JSON для Home Assistant в соответствующем топике."""
+
+        if self.device_uid is None:
+            raise RuntimeError("Нельзя опубликовать MQTT discovery JSON без привязки к устройству")
+
+        if self.mqtt_client is None:
+            raise RuntimeError("Нельзя опубликовать MQTT discovery JSON без mqtt клиента")
+
+        if self.discovery_topic is None:
+            raise RuntimeError("Нельзя опубликовать MQTT discovery JSON без discovery топика")
+
+        self.mqtt_client.publish(
+            self.discovery_topic,
+            self.model.discovery_json(),
+            1,
+            False,
         )
 
     def unpublish_discovery(self) -> None:
-        """
-        Этот метод публикует пустую строку для Home Assistant в топике для MQTT discovery.
-        Метод вызывается нодой.
-        """
-        if self.node is None:
-            raise RuntimeError("Cannot un-publish discovery of entity without node")
-        self.node.client.publish(self.discovery_topic, "", 1, False)
+        """Снять с публикации MQTT discovery JSON для Home Assistant."""
+
+        if self.device_uid is None:
+            raise RuntimeError("Нельзя снять с публикации MQTT discovery JSON без привязки к устройству")
+
+        if self.mqtt_client is None:
+            raise RuntimeError("Нельзя снять с публикации MQTT discovery JSON без mqtt клиента")
+
+        if self.discovery_topic is None:
+            raise RuntimeError("Нельзя снять с публикации MQTT discovery JSON без discovery топика")
+
+        self.mqtt_client.publish(
+            self.discovery_topic,
+            "",
+            1,
+            False,
+        )

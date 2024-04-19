@@ -1,16 +1,17 @@
 from typing import Optional
 
-from src.entities import Entity, enums
+from src.entities import enums
+
+from .entity import EntityModel
 
 
-class Number(Entity):
+class NumberModel(EntityModel):
     """Эффектор с float-состоянием."""
 
     discovery_class_: str = "number"
 
     command_template: Optional[str] = None
     command_topic: Optional[str] = None
-    state_topic: Optional[str] = None
     device_class: Optional[enums.SensorEnum] = None
     min: Optional[float] = 1
     max: Optional[float] = 100

@@ -1,9 +1,11 @@
 from typing import List, Optional
 
-from src.entities import Entity, enums
+from src.entities import enums
+
+from .entity import EntityModel
 
 
-class Light(Entity):
+class LightModel(EntityModel):
     """Освещение, в т.ч. регулируемой яркости и цвета."""
 
     discovery_class_: str = "light"
@@ -22,7 +24,6 @@ class Light(Entity):
     command_topic: Optional[str] = None
     payload_off: Optional[str] = None
     payload_on: Optional[str] = None
-    state_topic: Optional[str] = None
     state_value_template: Optional[str] = None
     effect_command_topic: Optional[str] = None
     effect_command_template: Optional[str] = None
