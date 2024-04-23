@@ -1,8 +1,7 @@
 from typing import List, Optional
 
-from src.entities import enums
-
-from .entity import EntityModel
+from . import enums
+from .base import EntityModel
 
 
 class LightModel(EntityModel):
@@ -36,7 +35,7 @@ class LightModel(EntityModel):
     hs_value_template: Optional[str] = None
     max_mireds: Optional[int] = None
     min_mireds: Optional[int] = None
-    on_command_type: Optional[enums.LightCommandType] = None
+    on_command_type: Optional[enums.LightCommandEnum] = None
     rgb_command_template: Optional[str] = None
     rgb_command_topic: Optional[str] = None
     rgb_state_topic: Optional[str] = None

@@ -1,8 +1,7 @@
 from typing import Optional
 
-from src.entities import enums
-
-from .entity import EntityModel
+from . import enums
+from .base import EntityModel
 
 
 class BinarySensorModel(EntityModel):

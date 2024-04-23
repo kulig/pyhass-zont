@@ -1,15 +1,12 @@
-from typing import TYPE_CHECKING, Generic, Optional, TypeVar
+from typing import Generic, Optional, TypeVar
 
 import paho.mqtt.client as mqtt
 
-from src.devices.models import DeviceModel
+from src.entity.models import EntityModel
+from src.node.models import DeviceModel
 
 
-if TYPE_CHECKING:
-    from src.entities.models import EntityModel
-
-
-EntityM = TypeVar("EntityM", bound="EntityModel")
+EntityM = TypeVar("EntityM", bound=EntityModel)
 
 
 class Entity(Generic[EntityM]):
@@ -21,7 +18,7 @@ class Entity(Generic[EntityM]):
     def __init__(
         self,
         uid: str,
-        entity_model: EntityM,
+        model: EntityM,
     ) -> None:
         """
         Инициализировать сущность.
@@ -31,46 +28,41 @@ class Entity(Generic[EntityM]):
             entity_model: Модель, описывающая сущность для Home Assistant.
         """
         self.uid = uid
-        self.name = entity_model.name
-        self.model = entity_model
+        self.model = model
+        self.model.name = f"{self.model.name} ({self.uid})"
         self.discovery_topic: Optional[str] = None
         self.mqtt_client: Optional[mqtt.Client] = None
-        self.device_uid: Optional[str] = None
+        self.node_uid: Optional[str] = None
 
     def bind(
         self,
+        node_uid: str,
         device_model: DeviceModel,
         mqtt_client: mqtt.Client,
+        discovery_prefix: str,
     ) -> None:
         """
         Привязать сущность к устройству.
 
         Args:
-            device_model: Модель устройства для Home Assistant.
+            node_model: Модель устройства для Home Assistant.
             mqtt_client: MQTT-клиент, экземпляр paho.mqtt.client.Client
+            discovery_prefix: Префикс для discovery топиков в Home Assistant
         """
         self.mqtt_client = mqtt_client
-        self.model.unique_id = f"{device_model.uid}_{self.uid}"
+        self.model.unique_id = f"{node_uid}_{self.uid}"
         self.model.object_id = self.model.unique_id
-        self.model.state_topic = f"{device_model.uid}/{self.uid}/state"
+        self.model.state_topic = f"{node_uid}/{self.uid}/state"
         self.model.device = device_model
-        self.discovery_topic = (
-            f"{device_model.discovery_prefix}/{self.model.discovery_class_}/{device_model.uid}/{self.uid}/config"
-        )
-        self.device_uid = device_model.uid
+        self.discovery_topic = f"{discovery_prefix}/{self.model.discovery_class_}/{node_uid}/{self.uid}/config"
+        self.node_uid = node_uid
 
         self.subscribe()
         self.publish_discovery()
         self.publish_state()
 
     def unbind(self) -> None:
-        """
-        Отвязать сущность от устройства.
-
-        Args:
-            device_model: Модель устройства для Home Assistant.
-            mqtt_client: MQTT-клиент, экземпляр paho.mqtt.client.Client
-        """
+        """Отвязать сущность от устройства."""
         self.unpublish_discovery()
         self.unsubscribe()
 
@@ -80,7 +72,7 @@ class Entity(Generic[EntityM]):
         self.model.state_topic = None
         self.model.device = None
         self.discovery_topic = None
-        self.device_uid = None
+        self.node_uid = None
 
     def subscribe(self) -> None:
         """
@@ -97,7 +89,7 @@ class Entity(Generic[EntityM]):
                 message: mqtt.MQTTMessage
             ) -> None
         """
-        if self.device_uid is None:
+        if self.node_uid is None:
             raise RuntimeError("Нельзя подписаться на топики без привязки к устройству")
 
         if self.mqtt_client is None:
@@ -113,7 +105,7 @@ class Entity(Generic[EntityM]):
             self.mqtt_client.unsubscribe(topic)
         """
 
-        if self.device_uid is None:
+        if self.node_uid is None:
             raise RuntimeError("Нельзя отписаться от топиков без привязки к устройству")
 
         if self.mqtt_client is None:
@@ -126,7 +118,7 @@ class Entity(Generic[EntityM]):
     def publish_state(self) -> None:
         """Опубликовать состояние в state_topic"""
 
-        if self.device_uid is None:
+        if self.node_uid is None:
             raise RuntimeError("Нельзя опубликовать состояние без привязки к устройству")
 
         if self.mqtt_client is None:
@@ -145,7 +137,7 @@ class Entity(Generic[EntityM]):
     def publish_discovery(self) -> None:
         """Опубликовать MQTT discovery JSON для Home Assistant в соответствующем топике."""
 
-        if self.device_uid is None:
+        if self.node_uid is None:
             raise RuntimeError("Нельзя опубликовать MQTT discovery JSON без привязки к устройству")
 
         if self.mqtt_client is None:
@@ -164,7 +156,7 @@ class Entity(Generic[EntityM]):
     def unpublish_discovery(self) -> None:
         """Снять с публикации MQTT discovery JSON для Home Assistant."""
 
-        if self.device_uid is None:
+        if self.node_uid is None:
             raise RuntimeError("Нельзя снять с публикации MQTT discovery JSON без привязки к устройству")
 
         if self.mqtt_client is None:

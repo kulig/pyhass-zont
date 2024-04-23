@@ -1,7 +1,7 @@
 from typing import Optional
 
-from src.devices.models import DeviceModel
 from src.models import Base
+from src.node.models import DeviceModel
 
 
 class AvailabilityModel(Base):

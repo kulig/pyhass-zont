@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from .entity import EntityModel
+from .base import EntityModel
 
 
 class FanModel(EntityModel):

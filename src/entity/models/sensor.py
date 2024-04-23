@@ -1,8 +1,7 @@
 from typing import Optional
 
-from src.entities import enums
-
-from .entity import EntityModel
+from . import enums
+from .base import EntityModel
 
 
 class SensorModel(EntityModel):
@@ -14,7 +13,7 @@ class SensorModel(EntityModel):
 
     discovery_class_: str = "sensor"
 
-    expire_after: Optional[None] = None
+    expire_after: Optional[int] = None
     force_update: Optional[bool] = None
     device_class: Optional[enums.SensorEnum] = None
     last_reset_value_template: Optional[str] = None
@@ -22,3 +21,14 @@ class SensorModel(EntityModel):
     state_class: Optional[enums.SensorStateEnum] = None
     unit_of_measurement: Optional[str] = None
     value_template: Optional[str] = None
+
+
+class ThermoSensorDummyModel(SensorModel):
+    """Датчик температуры. Заглушка для тестирования."""
+
+    name: str = 'Dummy thermo sensor'
+    expire_after: int = 600
+    device_class: enums.SensorEnum = enums.SensorEnum.temperature
+    unit_of_measurement: str = '°C'
+    suggested_display_precision: int = 1
+    icon: str = 'mdi:thermometer-water'

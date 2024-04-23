@@ -1,6 +1,6 @@
 from typing import List, Literal, Optional
 
-from .entity import EntityModel
+from .base import EntityModel
 
 
 class WaterHeaterModel(EntityModel):
