@@ -2,6 +2,14 @@ import requests
 import typing as t
 
 
+__all__ = [
+    'ZontError',
+    'UnexpectedResponse',
+    'NotAuthorizedError',
+    'API'
+]
+
+
 class ZontError(Exception):
     def __init__(self, code: str, descr: str | list[str]) -> None:
         self.code = code
@@ -9,12 +17,12 @@ class ZontError(Exception):
 
 
 class NotAuthorizedError(ZontError):
-    def __init__(self):
+    def __init__(self) -> None:
         super('not_authorized', 'Client has not been authorized')
 
 
 class UnexpectedResponse(Exception):
-    def __init__(self):
+    def __init__(self) -> None:
         super('invalid_response', 'Unexpected or malformed response')
 
 
@@ -22,12 +30,14 @@ class API:
 
     URL: str = 'https://lk.zont-online.ru/api'
 
-    def __init__(self, client_id: str) -> None:
+    def __init__(self, client_id: str, token: str | None = None) -> None:
         self.headers = {
             'Content-Type': 'application/json',
             'X-ZONT-Client': client_id
         }
-        self.token = None
+        self.token = token
+        if self.token:
+            self.headers['X-ZONT-Token'] = self.token
         self.session = requests.Session()
 
     @staticmethod
@@ -50,7 +60,7 @@ class API:
         self.token = data['token']
         self.headers['X-ZONT-Token'] = self.token
 
-    def request(self, method: str, data: dict) -> t.Any:
+    def request(self, method: str, data: dict[str, t.Any]) -> t.Any:
         if not self.token:
             raise NotAuthorizedError()
         r = self.session.post(
@@ -62,4 +72,3 @@ class API:
         data = r.json()
         self.check_result(data)
         return data
-

@@ -1,4 +1,5 @@
-from pyhass_mqtt import *
+from pyhass_mqtt.objects import Entity, Device
+from pyhass_mqtt.entities import models, enums
 import paho.mqtt.client as mqtt
 import typing as t
 import random
@@ -6,11 +7,12 @@ import random
 
 class TemperatureSensor(Entity):
 
-    def __init__(self, id_: str) -> None:
-        super().__init__(id_, model_cls=models.Sensor)
-        self.model.name = f'Dummy thermosensor from python {id_}'
+    def __init__(self, uid: str) -> None:
+        super().__init__(uid, entity_model=models.SensorModel())
+        self.model.name = f'Dummy thermosensor from python {uid}'
         self.model.expire_after = 600
         self.model.device_class = enums.SensorDeviceClass.temperature
+        self.model.unit_of_measurement = 'C'
         self.model.suggested_display_precision = 1
 
     def get_state(self) -> str:
@@ -19,9 +21,9 @@ class TemperatureSensor(Entity):
 
 class Relay(Entity):
 
-    def __init__(self, id_: str) -> None:
-        super().__init__(id_, model_cls=models.Switch)
-        self.model.name = f'Dummy relay "{id_}"'
+    def __init__(self, uid: str) -> None:
+        super().__init__(uid, entity_model=models.SwitchModel())
+        self.model.name = f'Dummy relay "{uid}"'
         self.model.optimistic = False   # это значит, что HA после отправки команды должен дождаться подтверждения от нас
         self.model.payload_off = 'OFF'  # это HA будет слать в командный топик, чтобы нас выключить
         self.model.payload_on = 'ON'    # это HA будет слать в командный топик, чтобы нас включить
@@ -32,18 +34,8 @@ class Relay(Entity):
     def get_state(self) -> str:
         return self.model.state_on if self.state else self.model.state_off
 
-    def set_node(self, node: t.Optional['Node']) -> None:
-        '''
-        Перекроем метод, в котором устанавливается нода, чтобы сгененрировать командный топик.
-        Можно вообще сделать суперуникальный командный топик и просто прописать его в модель в конструкторе.
-        Но это как-то не кузяво.
-        Метод set_node() дохуя важный и в перекрытом коде надо обязательно вызвать родительский
-        '''
-        super().set_node(node)
-        if node:
-            self.model.command_topic = f'{node.id}/{self.id}/command'
-        else:
-            self.model.command_topic = None
+    def on_bind(self) -> None:
+        self.model.command_topic = f'{self.owner.id}/{self.uid}/command'
 
     def on_set_command(self, client: mqtt.Client, userdata: t.Any, msg: mqtt.MQTTMessage) -> None:
         '''
@@ -63,21 +55,21 @@ class Relay(Entity):
     def subscribe(self) -> None:
         '''
         Это охуенно важный метод. В нем мы подписываемся на свой командный топик.
-        Этот метод вызывается только нодой и она во время его выполнения гарантировано определена
+        Этот метод вызывается только устройством (self.owner)
         '''
         # Дернули папский метод (там тупо проверка)
         super().subscribe()
         # Сказали MQTT-клиенту, что желаем подписаться вот на этот топик
-        self.node.client.subscribe(self.model.command_topic)
+        self.owner.mqtt_client.subscribe(self.model.command_topic)
         # Сказали MQTT-клиенту, что, сука, не просто так подписались, а чтобы он коллбек дернул по факту сообщения
-        self.node.client.message_callback_add(self.model.command_topic, self.on_set_command)
+        self.owner.mqtt_client.message_callback_add(self.model.command_topic, self.on_set_command)
 
     def unsubscribe(self) -> None:
         '''
         Здесь иы отписывааемся к ебаной матери от всех топиков, на которые имели подписку.
         Подписался - отпишись.
-        Метод, как и subscribe(), вызывается только нодой, не вручную.
+        Метод, как и subscribe(), вызывается только устройством, не вручную.
         '''
         super().unsubscribe()
-        self.node.client.message_callback_remove(self.model.command_topic)
-        self.node.client.unsubscribe(self.model.command_topic)
+        self.owner.mqtt_client.message_callback_remove(self.model.command_topic)
+        self.owner.mqtt_client.unsubscribe(self.model.command_topic)

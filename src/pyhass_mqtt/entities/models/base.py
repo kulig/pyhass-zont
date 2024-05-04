@@ -1,7 +1,7 @@
-from pydantic import BaseModel
+from pydantic import BaseModel as PydanticModel
 
 
-class Base(BaseModel):
+class BaseModel(PydanticModel):
     """Базовый класс для моделей устройств и сущностей"""
 
     def discovery_json(self) -> str:

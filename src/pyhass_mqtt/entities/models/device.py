@@ -1,7 +1,7 @@
-from pydantic import BaseModel
+from .base import BaseModel
 
 
-class Device(BaseModel):
+class DeviceModel(BaseModel):
     configuration_url: str | None = None
     connections: list[tuple[str, str]] | None = None
     hw_version: str | None = None

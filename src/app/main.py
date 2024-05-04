@@ -1,12 +1,14 @@
 import time
-
-from pyhass_mqtt import *
 import paho.mqtt.client as mqtt
+
+from pyhass_mqtt.objects import Device
+from pyhass_mqtt.entities import models
+
 import config
 import entities
 
 
-def init_node(id_: str) -> Node:
+def init_device(id_: str) -> Device:
     # Создаем экземпляр MQTT-клиента
     client = mqtt.Client(
         callback_api_version=mqtt.CallbackAPIVersion.VERSION2,
@@ -22,11 +24,11 @@ def init_node(id_: str) -> Node:
     )
     client.loop_start()
 
-    # Создаем собственно node
-    return Node(
+    # Создаем собственно устройство
+    return Device(
         id_=id_,
-        client=client,
-        device=models.Device(
+        mqtt_client=client,
+        device_model=models.DeviceModel(
             manufacturer=config.NODE_DEVICE_MANUFACTURER,
             name=config.NODE_DEVICE_NAME,
             model=config.NODE_DEVICE_MODEL,
@@ -36,7 +38,7 @@ def init_node(id_: str) -> Node:
 
 
 def main() -> None:
-    node = init_node('TEST_NODE')
+    node = init_device('TEST_NODE')
 
     boiler_temp = entities.TemperatureSensor('boiler_temp')
     boiler_temp.model.icon = 'mdi:thermometer-water'

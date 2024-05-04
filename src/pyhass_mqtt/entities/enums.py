@@ -1,7 +1,7 @@
-from strenum import StrEnum
+from enum import StrEnum
 
 
-class BinarySensorEnum(StrEnum):
+class BinarySensorDeviceClass(StrEnum):
     """Перечисление типов для двоичного датчика"""
 
     battery = "battery"  # on means low, off means normal
@@ -34,7 +34,7 @@ class BinarySensorEnum(StrEnum):
     window = "window"  # on means open, off means closed
 
 
-class SensorEnum(StrEnum):
+class SensorDeviceClass(StrEnum):
     """Перечисление типов для датчика"""
 
     apparent_power = "apparent_power"  # Apparent power in VA.
@@ -94,7 +94,7 @@ class SensorEnum(StrEnum):
     wind_speed = "wind_speed"  # Wind speed in ft/s, km/h, kn, m/s, or mph
 
 
-class SensorStateEnum(StrEnum):
+class SensorState(StrEnum):
     """Перечисление состояний для датчика."""
 
     measurement = "measurement"
@@ -102,21 +102,21 @@ class SensorStateEnum(StrEnum):
     total_increasing = "total_increasing"
 
 
-class SwitchEnum(StrEnum):
+class Switch(StrEnum):
     """Перечисление типов для эффектора."""
 
     outlet = "outlet"
     switch = "switch"
 
 
-class LightCommandEnum(StrEnum):
+class LightCommand(StrEnum):
     """Перечисление команд для освещения."""
 
     last = "last"
     first = "first"
 
 
-class NumberModeEnum(StrEnum):
+class NumberMode(StrEnum):
     """Перечисление режимов для эффектора с float-состоянием."""
 
     auto = "auto"

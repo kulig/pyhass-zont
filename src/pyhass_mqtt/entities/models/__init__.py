@@ -1,4 +1,6 @@
+from .base import BaseModel
 from .binary_sensor import BinarySensorModel
+from .device import DeviceModel
 from .entity import EntityModel
 from .fan import FanModel
 from .light import LightModel
@@ -9,7 +11,9 @@ from .water_heater import WaterHeaterModel
 
 
 __all__ = [
+    'BaseModel',
     'BinarySensorModel',
+    'DeviceModel',
     'EntityModel',
     'FanModel',
     'LightModel',
