@@ -11,14 +11,14 @@ from .water_heater import WaterHeaterModel
 
 
 __all__ = [
-    'BaseModel',
-    'BinarySensorModel',
-    'DeviceModel',
-    'EntityModel',
-    'FanModel',
-    'LightModel',
-    'NumberModel',
-    'SensorModel',
-    'SwitchModel',
-    'WaterHeaterModel',
+    "BaseModel",
+    "BinarySensorModel",
+    "DeviceModel",
+    "EntityModel",
+    "FanModel",
+    "LightModel",
+    "NumberModel",
+    "SensorModel",
+    "SwitchModel",
+    "WaterHeaterModel",
 ]

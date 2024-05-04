@@ -5,8 +5,8 @@ from .entities.models import DeviceModel, EntityModel
 
 
 __all__ = [
-    'Device',
-    'Entity',
+    "Device",
+    "Entity",
 ]
 
 
@@ -18,7 +18,7 @@ class Device:
         id_: str,
         mqtt_client: mqtt.Client,
         device_model: DeviceModel,
-        discovery_prefix: str = 'homeassistant',
+        discovery_prefix: str = "homeassistant",
     ) -> None:
         """
         Инициализировать устройство
