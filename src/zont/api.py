@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import requests
 import typing as t
 
@@ -14,6 +16,7 @@ class ZontError(Exception):
     def __init__(self, code: str, descr: str | list[str]) -> None:
         self.code = code
         self.description = descr if isinstance(descr, str) else "\n".join(descr)
+        super().__init__(f"{self.code}: {self.description}")
 
 
 class NotAuthorizedError(ZontError):
@@ -21,13 +24,21 @@ class NotAuthorizedError(ZontError):
         super("not_authorized", "Client has not been authorized")
 
 
-class UnexpectedResponse(Exception):
+class UnexpectedResponse(ZontError):
     def __init__(self) -> None:
         super("invalid_response", "Unexpected or malformed response")
 
 
 class API:
     URL: str = "https://lk.zont-online.ru/api"
+
+    class Method:
+        def __init__(self, name: str, owner: API) -> None:
+            self.name = name
+            self.owner = owner
+
+        def __call__(self, **kwargs: t.Any) -> t.Any:
+            return self.owner.request(self.name, kwargs)
 
     def __init__(self, client_id: str, token: str | None = None) -> None:
         self.headers = {"Content-Type": "application/json", "X-ZONT-Client": client_id}
@@ -68,3 +79,6 @@ class API:
         data = r.json()
         self.check_result(data)
         return data
+
+    def __getattr__(self, method_name: str) -> t.Any:
+        return self.Method(method_name, self)
